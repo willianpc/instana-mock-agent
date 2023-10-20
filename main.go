@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"sync"
 )
 
 type urlMatch struct {
@@ -13,6 +14,8 @@ type urlMatch struct {
 
 var (
 	endpointCombos []urlMatch
+	dumpedSpans    []span
+	mu             sync.Mutex
 )
 
 func init() {
@@ -41,6 +44,8 @@ func main() {
 
 		w.WriteHeader(http.StatusNotFound)
 	})
+
+	http.HandleFunc("/dump", dumpHandler)
 
 	log.Fatal(http.ListenAndServe(":9090", nil))
 }

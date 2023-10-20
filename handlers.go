@@ -18,7 +18,7 @@ func spanHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	var sp span
+	var sp []span
 
 	err = json.Unmarshal(b, &sp)
 
@@ -28,11 +28,32 @@ func spanHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(sp)
+	mu.Lock()
+	dumpedSpans = append(dumpedSpans, sp...)
+	mu.Unlock()
 
 	w.WriteHeader(http.StatusOK)
 }
 
 func discoveryHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+}
+
+func dumpHandler(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	b, err := json.Marshal(dumpedSpans)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(b)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
