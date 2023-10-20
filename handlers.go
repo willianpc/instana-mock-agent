@@ -36,6 +36,42 @@ func spanHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func discoveryHandler(w http.ResponseWriter, r *http.Request) {
+	b, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		log.Printf("error reading discovery request: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	var discoveryReq discoveryRequest
+
+	err = json.Unmarshal(b, &discoveryReq)
+
+	if err != nil {
+		log.Printf("error unmarshalling discovery request: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res := discoveryResponse{}
+	b, err = json.Marshal(res)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(b)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func pingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 

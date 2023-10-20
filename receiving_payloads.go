@@ -60,3 +60,12 @@ type typedSpanData interface {
 	// Type() RegisteredSpanType
 	// Kind() SpanKind
 }
+
+type discoveryRequest struct {
+	PID               int      `json:"pid"`
+	Name              string   `json:"name"`
+	Args              []string `json:"args"`
+	Fd                string   `json:"fd"`
+	Inode             string   `json:"inode"`
+	CPUSetFileContent string   `json:"cpuSetFileContent"`
+}
