@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func spanHandler(w http.ResponseWriter, r *http.Request) {
+func tracesHandler(w http.ResponseWriter, r *http.Request, f func(spans []span)) {
 	b, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -28,9 +28,9 @@ func spanHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mu.Lock()
-	dumpedSpans = append(dumpedSpans, sp...)
-	mu.Unlock()
+	if f != nil {
+		f(sp)
+	}
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -75,9 +75,13 @@ func pingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func dumpHandler(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	defer mu.Unlock()
+func dumpHandler(w http.ResponseWriter, r *http.Request, f func() []span) {
+	if f == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	dumpedSpans := f()
 
 	b, err := json.Marshal(dumpedSpans)
 

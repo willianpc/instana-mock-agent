@@ -1,72 +1,95 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"regexp"
+	"strconv"
+	"strings"
 	"sync"
 )
 
-type urlMatch struct {
-	re regexp.Regexp
-	h  http.HandlerFunc
-}
-
 var (
-	endpointCombos []urlMatch
-	dumpedSpans    []span
-	mu             sync.Mutex
-	port           string
+	port      string
+	portsPool int
+	portMap   map[int]*agent
+	mainMu    sync.Mutex
 )
 
 func init() {
-	// official port is 42699
-	port = "42698"
+	portsPool = 29090
+	port = "9090"
+
+	portMap = make(map[int]*agent)
 
 	if p := os.Getenv("MOCK_AGENT_PORT"); p != "" {
 		port = p
 	}
+}
 
-	endpointCombos = []urlMatch{
-		{
-			// eg: /com.instana.plugin.golang/traces.12345
-			*regexp.MustCompile(`\/com\.instana\.plugin\..*\/traces\.\d+`),
-			spanHandler,
-		},
-		{
-			// eg: /com.instana.plugin.golang.discovery
-			*regexp.MustCompile(`\/com\.instana\.plugin\..*\.discovery`),
-			discoveryHandler,
-		},
-		{
-			// eg: /com.instana.plugin.golang.12345
-			*regexp.MustCompile(`\/com\.instana\.plugin\..*\.\d+`),
-			pingHandler,
-		},
+func spawnAgent(w http.ResponseWriter, r *http.Request) {
+	mainMu.Lock()
+	defer mainMu.Unlock()
+
+	portsPool++
+
+	agentSpawn := &agent{
+		port: portsPool,
+	}
+
+	agentSpawn.start()
+
+	portMap[portsPool] = agentSpawn
+
+	w.Header().Add("X-MOCK-AGENT-PORT", strconv.Itoa(portsPool))
+
+	_, err := w.Write([]byte(strconv.Itoa(portsPool)))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		urlPath := r.URL.String()
+func killAgent(w http.ResponseWriter, r *http.Request) {
+	p := strings.Split(r.URL.Path, "/")
 
-		if urlPath == "/" {
-			w.WriteHeader(http.StatusOK)
+	if len(p) != 3 {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	agentPort, err := strconv.Atoi(p[2])
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	mainMu.Lock()
+	defer mainMu.Unlock()
+
+	if _, ok := portMap[agentPort]; ok {
+		err = portMap[agentPort].stop()
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		for _, endpointCombo := range endpointCombos {
-			if endpointCombo.re.MatchString(urlPath) {
-				endpointCombo.h(w, r)
-				return
-			}
-		}
+		delete(portMap, agentPort)
+		fmt.Println(portMap)
 
-		w.WriteHeader(http.StatusNotFound)
-	})
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
-	http.HandleFunc("/dump", dumpHandler)
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func main() {
+	http.HandleFunc("/spawn", spawnAgent)
+	http.HandleFunc("/kill/", killAgent)
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
