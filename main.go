@@ -32,19 +32,64 @@ func spawnAgent(w http.ResponseWriter, r *http.Request) {
 	mainMu.Lock()
 	defer mainMu.Unlock()
 
-	portsPool++
+	var newPort int
+
+	p := strings.Split(r.URL.Path, "/")
+
+	if len(p) != 3 {
+		// path is neither /spawn/ or /spawn/{port}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// /spawn/ called
+	if p[2] == "" {
+		portsPool++
+
+		if _, ok := portMap[portsPool]; ok {
+			// port already in use
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		newPort = portsPool
+	}
+
+	// /spawn/some_port called
+	if p[2] != "" {
+		agentPort, err := strconv.Atoi(p[2])
+
+		if err != nil {
+			// port is not a number
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if _, ok := portMap[agentPort]; ok {
+			// port already in use
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		newPort = agentPort
+	}
+
+	if newPort == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	agentSpawn := &agent{
-		port: portsPool,
+		port: newPort,
 	}
 
 	agentSpawn.start()
 
-	portMap[portsPool] = agentSpawn
+	portMap[newPort] = agentSpawn
 
-	w.Header().Add("X-MOCK-AGENT-PORT", strconv.Itoa(portsPool))
+	w.Header().Add("X-MOCK-AGENT-PORT", strconv.Itoa(newPort))
 
-	_, err := w.Write([]byte(strconv.Itoa(portsPool)))
+	_, err := w.Write([]byte(strconv.Itoa(newPort)))
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -88,7 +133,7 @@ func killAgent(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/spawn", spawnAgent)
+	http.HandleFunc("/spawn/", spawnAgent)
 	http.HandleFunc("/kill/", killAgent)
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
