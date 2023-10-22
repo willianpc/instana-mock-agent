@@ -1,6 +1,8 @@
 # Instana Mock Agent
 
-The idea is to provide a mocked agent that offers the following endpoints:
+The idea is to provide a manager that spawns mocked agents.
+
+Each of these mocked agents provide the following endpoints:
 
 1. Agent ping. Eg: `/com.instana.plugin.golang.12345`
 1. Discovery. Eg: `/com.instana.plugin.golang.discovery`
@@ -20,13 +22,17 @@ We assume default port 9090, but you can change it with the env var `MOCK_AGENT_
 
 ### Useful cURL tests
 
-      $  curl -D- -X -POST -d "$(cat ./fixtures/span.json)" "http://localhost:9090/com.instana.plugin.nodejs/traces.12345"
+We assume the first auto generated port `29091`, but you can specify a port by calling `http://localhost:9090/spawn/{MY_PORT}`
+
+      $  curl -D- -X -POST -d "$(cat ./fixtures/span.json)" "http://localhost:29091/com.instana.plugin.nodejs/traces.12345"
 ---
-      $  curl -D- -X -POST -d "$(cat ./fixtures/discovery_req.json)" "http://localhost:9090/com.instana.plugin.nodejs.discovery"
+      $  curl -D- -X -POST -d "$(cat ./fixtures/discovery_req.json)" "http://localhost:29091/com.instana.plugin.nodejs.discovery"
 ---
-      $  curl -D- "http://localhost:9090/com.instana.plugin.golang.12345"
+      $  curl -D- "http://localhost:29091/com.instana.plugin.golang.12345"
 
 
 ## Environment Variables
 
 ### MOCK_AGENT_PORT
+
+Will start the agent manager with the given port.

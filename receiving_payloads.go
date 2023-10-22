@@ -56,10 +56,8 @@ type batchInfo struct {
 	Size int `json:"s"`
 }
 
-type typedSpanData interface {
-	// Type() RegisteredSpanType
-	// Kind() SpanKind
-}
+// represents span.data
+type typedSpanData interface{}
 
 type discoveryRequest struct {
 	PID               int      `json:"pid"`
@@ -67,5 +65,5 @@ type discoveryRequest struct {
 	Args              []string `json:"args"`
 	Fd                string   `json:"fd"`
 	Inode             string   `json:"inode"`
-	CPUSetFileContent string   `json:"cpuSetFileContent"`
+	CPUSetFileContent string   `json:"cpuSetFileContent,omitempty"`
 }
