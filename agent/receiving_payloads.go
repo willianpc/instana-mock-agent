@@ -1,7 +1,5 @@
 package agent
 
-import "fmt"
-
 type span struct {
 	TraceReference
 
@@ -20,22 +18,6 @@ type span struct {
 	CorrelationID   string          `json:"crid,omitempty"`
 	ForeignTrace    bool            `json:"tp,omitempty"`
 	Ancestor        *TraceReference `json:"ia,omitempty"`
-}
-
-func (sp span) String() string {
-	return fmt.Sprintf(`
-Parent id: %s
-Span id: %s
-Trace id: %s
-Timestamp: %v
-Duration: %v
-Name: %s
-From: %v
-Ec: %v
-Data: %v
-Batch: %v
-Kind: %d
-`, sp.ParentID, sp.SpanID, sp.TraceID, sp.Timestamp, sp.Duration, sp.Name, sp.From, sp.Ec, sp.Data, sp.Batch, sp.Kind)
 }
 
 type TraceReference struct {

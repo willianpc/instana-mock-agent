@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"regexp"
-	"strconv"
 	"sync"
 )
 
@@ -29,7 +28,7 @@ func init() {
 }
 
 type Agent struct {
-	Port int
+	Addr string
 	*http.Server
 	dumpedSpans    []span
 	endpointCombos []urlMatch
@@ -89,7 +88,7 @@ func (a *Agent) initServer() {
 		})
 
 		a.Server = &http.Server{
-			Addr:    ":" + strconv.Itoa(a.Port),
+			Addr:    a.Addr,
 			Handler: mux,
 		}
 	}

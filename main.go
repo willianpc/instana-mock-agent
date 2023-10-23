@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -82,7 +81,7 @@ func spawnAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	agentSpawn := &ma.Agent{
-		Port: newPort,
+		Addr: ":" + strconv.Itoa(newPort),
 	}
 
 	agentSpawn.Start()
@@ -125,7 +124,6 @@ func killAgent(w http.ResponseWriter, r *http.Request) {
 		}
 
 		delete(portMap, agentPort)
-		fmt.Println(portMap)
 
 		w.WriteHeader(http.StatusOK)
 		return
