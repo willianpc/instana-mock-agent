@@ -1,4 +1,4 @@
-package main
+package agent
 
 import (
 	"context"
@@ -28,15 +28,15 @@ func init() {
 	pingRE = *regexp.MustCompile(`\/com\.instana\.plugin\..*\.\d+`)
 }
 
-type agent struct {
-	port int
+type Agent struct {
+	Port int
 	*http.Server
 	dumpedSpans    []span
 	endpointCombos []urlMatch
 	mu             *sync.Mutex
 }
 
-func (a *agent) initServer() {
+func (a *Agent) initServer() {
 	if a.Server == nil {
 		a.mu = &sync.Mutex{}
 		mux := http.NewServeMux()
@@ -89,13 +89,13 @@ func (a *agent) initServer() {
 		})
 
 		a.Server = &http.Server{
-			Addr:    ":" + strconv.Itoa(a.port),
+			Addr:    ":" + strconv.Itoa(a.Port),
 			Handler: mux,
 		}
 	}
 }
 
-func (a *agent) start() {
+func (a *Agent) Start() {
 	a.initServer()
 
 	go func() {
@@ -103,7 +103,7 @@ func (a *agent) start() {
 	}()
 }
 
-func (a *agent) stop() error {
+func (a *Agent) Stop() error {
 	if a.Server != nil {
 		return a.Server.Shutdown(context.Background())
 	}

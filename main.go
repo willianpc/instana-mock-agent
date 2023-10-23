@@ -8,12 +8,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	ma "github.com/willianpc/instana-mock-agent/agent"
 )
 
 var (
 	port      string
 	portsPool int
-	portMap   map[int]*agent
+	portMap   map[int]*ma.Agent
 	mainMu    sync.Mutex
 )
 
@@ -21,7 +23,7 @@ func init() {
 	portsPool = 29090
 	port = "9090"
 
-	portMap = make(map[int]*agent)
+	portMap = make(map[int]*ma.Agent)
 
 	if p := os.Getenv("MOCK_AGENT_PORT"); p != "" {
 		port = p
@@ -79,11 +81,11 @@ func spawnAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agentSpawn := &agent{
-		port: newPort,
+	agentSpawn := &ma.Agent{
+		Port: newPort,
 	}
 
-	agentSpawn.start()
+	agentSpawn.Start()
 
 	portMap[newPort] = agentSpawn
 
@@ -115,7 +117,7 @@ func killAgent(w http.ResponseWriter, r *http.Request) {
 	defer mainMu.Unlock()
 
 	if _, ok := portMap[agentPort]; ok {
-		err = portMap[agentPort].stop()
+		err = portMap[agentPort].Stop()
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

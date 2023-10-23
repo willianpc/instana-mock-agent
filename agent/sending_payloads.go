@@ -1,4 +1,4 @@
-package main
+package agent
 
 type discoveryResponse struct {
 	Pid     uint32 `json:"pid"`
