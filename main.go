@@ -132,9 +132,20 @@ func killAgent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
+func agentList(w http.ResponseWriter, r *http.Request) {
+	l := ""
+
+	for k := range portMap {
+		l += ", " + strconv.Itoa(k)
+	}
+
+	_, _ = w.Write([]byte(l))
+}
+
 func main() {
 	http.HandleFunc("/spawn/", spawnAgent)
 	http.HandleFunc("/kill/", killAgent)
+	http.HandleFunc("/list", agentList)
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
