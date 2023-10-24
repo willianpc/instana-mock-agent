@@ -3,7 +3,7 @@ package agent_test
 import (
 	"testing"
 
-	at "github.com/willianpc/instana-mock-agent/test"
+	at "github.com/willianpc/instana-mock-agent/internal/test"
 )
 
 func TestSum(t *testing.T) {
