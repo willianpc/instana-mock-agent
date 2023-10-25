@@ -26,7 +26,8 @@ type TraceReference struct {
 }
 
 type fromS struct {
-	EntityID string `json:"e"`
+	// By spec, this must be a number, but some tracers send strings, and the Agent accept them.
+	EntityID interface{} `json:"e"`
 	// Serverless agents fields
 	Hostless      bool   `json:"hl,omitempty"`
 	CloudProvider string `json:"cp,omitempty"`
