@@ -42,7 +42,7 @@ type batchInfo struct {
 type typedSpanData interface{}
 
 type discoveryRequest struct {
-	PID               int      `json:"pid"`
+	PID               uint32   `json:"pid"`
 	Name              string   `json:"name"`
 	Args              []string `json:"args"`
 	Fd                string   `json:"fd"`

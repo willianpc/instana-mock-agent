@@ -55,7 +55,13 @@ func discoveryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := discoveryResponse{}
+	pid := discoveryReq.PID
+
+	if pid == 0 {
+		pid = 1
+	}
+
+	res := discoveryResponse{Pid: pid}
 	b, err = json.Marshal(res)
 
 	if err != nil {
