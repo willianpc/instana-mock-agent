@@ -40,26 +40,7 @@ func (a *Agent) initServer() {
 		a.mu = &sync.Mutex{}
 		mux := http.NewServeMux()
 
-		a.endpointCombos = []urlMatch{
-			{
-				tracesRE,
-				func(w http.ResponseWriter, r *http.Request) {
-					tracesHandler(w, r, func(spans []span) {
-						a.mu.Lock()
-						a.dumpedSpans = append(a.dumpedSpans, spans...)
-						a.mu.Unlock()
-					})
-				},
-			},
-			{
-				discoveryRE,
-				discoveryHandler,
-			},
-			{
-				pingRE,
-				pingHandler,
-			},
-		}
+		a.initEndpointCombos()
 
 		mux.HandleFunc("/dump", func(w http.ResponseWriter, r *http.Request) {
 			dumpHandler(w, r, func() []span {
@@ -92,6 +73,43 @@ func (a *Agent) initServer() {
 			Handler: mux,
 		}
 	}
+}
+
+func (a *Agent) initEndpointCombos() {
+	a.endpointCombos = []urlMatch{
+		{
+			tracesRE,
+			a.traceHandler,
+		},
+		{
+			discoveryRE,
+			a.discoveryHandler,
+		},
+		{
+			pingRE,
+			pingHandler,
+		},
+	}
+}
+
+func (a *Agent) traceHandler(w http.ResponseWriter, r *http.Request) {
+	tracesHandler(w, r, func(spans []span) {
+		a.mu.Lock()
+		a.dumpedSpans = append(a.dumpedSpans, spans...)
+		a.mu.Unlock()
+	})
+}
+
+func (a *Agent) discoveryHandler(w http.ResponseWriter, r *http.Request) {
+	discoveryHandler(w, r, func(dr discoveryRequest) discoveryResponse {
+		pid := dr.PID
+
+		if pid == 0 {
+			pid = 1
+		}
+
+		return discoveryResponse{Pid: pid, HostID: "88:66:5a:ff:fe:05:a5:f0"}
+	})
 }
 
 func (a *Agent) Start() {

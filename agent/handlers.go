@@ -35,7 +35,7 @@ func tracesHandler(w http.ResponseWriter, r *http.Request, f func(spans []span))
 	w.WriteHeader(http.StatusOK)
 }
 
-func discoveryHandler(w http.ResponseWriter, r *http.Request) {
+func discoveryHandler(w http.ResponseWriter, r *http.Request, f func(dr discoveryRequest) discoveryResponse) {
 	b, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -55,19 +55,15 @@ func discoveryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pid := discoveryReq.PID
-
-	if pid == 0 {
-		pid = 1
-	}
-
-	res := discoveryResponse{Pid: pid}
+	res := f(discoveryReq)
 	b, err = json.Marshal(res)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Add("Content-Type", "application/json")
 
 	_, err = w.Write(b)
 
@@ -95,6 +91,8 @@ func dumpHandler(w http.ResponseWriter, r *http.Request, f func() []span) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Add("Content-Type", "application/json")
 
 	_, err = w.Write(b)
 
