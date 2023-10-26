@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"regexp"
 	"sync"
@@ -27,16 +28,51 @@ func init() {
 	pingRE = *regexp.MustCompile(`\/com\.instana\.plugin\..*\.\d+`)
 }
 
+type Options struct {
+	Addr    string
+	PID     uint32
+	HostID  string
+	Secrets struct {
+		Matcher string
+		List    []string
+	}
+	ExtraHTTPHeaders []string
+	Tracing          struct {
+		ExtraHTTPHeaders []string
+	}
+}
+
 type Agent struct {
-	Addr string
 	*http.Server
 	dumpedSpans    []span
 	endpointCombos []urlMatch
 	mu             *sync.Mutex
 }
 
+func NewAgent(opts *Options) *Agent {
+	if opts == nil {
+		log.Println("opts not provided")
+		return nil
+	}
+
+	if opts.Addr == "" {
+		log.Println("opts.Addr not provided")
+		return nil
+	}
+
+	a := &Agent{
+		Server: &http.Server{
+			Addr: opts.Addr,
+		},
+	}
+
+	a.initServer()
+
+	return a
+}
+
 func (a *Agent) initServer() {
-	if a.Server == nil {
+	if a.Server == nil || a.Server.Handler == nil || a.Server.Addr == "" {
 		a.mu = &sync.Mutex{}
 		mux := http.NewServeMux()
 
@@ -68,10 +104,7 @@ func (a *Agent) initServer() {
 			w.WriteHeader(http.StatusNotFound)
 		})
 
-		a.Server = &http.Server{
-			Addr:    a.Addr,
-			Handler: mux,
-		}
+		a.Server.Handler = mux
 	}
 }
 
@@ -108,7 +141,7 @@ func (a *Agent) discoveryHandler(w http.ResponseWriter, r *http.Request) {
 			pid = 1
 		}
 
-		return discoveryResponse{Pid: pid, HostID: "88:66:5a:ff:fe:05:a5:f0"}
+		return discoveryResponse{PID: pid, HostID: "88:66:5a:ff:fe:05:a5:f0"}
 	})
 }
 

@@ -80,9 +80,9 @@ func spawnAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agentSpawn := &ma.Agent{
+	agentSpawn := ma.NewAgent(&ma.Options{
 		Addr: ":" + strconv.Itoa(newPort),
-	}
+	})
 
 	agentSpawn.Start()
 
@@ -90,7 +90,7 @@ func spawnAgent(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("X-MOCK-AGENT-PORT", strconv.Itoa(newPort))
 
-	_, err := w.Write([]byte(strconv.Itoa(newPort)))
+	_, err := w.Write([]byte(strconv.Itoa(newPort) + "\n"))
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

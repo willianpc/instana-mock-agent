@@ -1,7 +1,7 @@
 package agent
 
 type discoveryResponse struct {
-	Pid     uint32 `json:"pid"`
+	PID     uint32 `json:"pid"`
 	HostID  string `json:"agentUuid"`
 	Secrets struct {
 		Matcher string   `json:"matcher"`

@@ -1,7 +1,7 @@
 package agent
 
 type span struct {
-	TraceReference
+	traceReference
 
 	SpanID          string          `json:"s"`
 	LongTraceID     string          `json:"lt,omitempty"`
@@ -17,10 +17,10 @@ type span struct {
 	CorrelationType string          `json:"crtp,omitempty"`
 	CorrelationID   string          `json:"crid,omitempty"`
 	ForeignTrace    bool            `json:"tp,omitempty"`
-	Ancestor        *TraceReference `json:"ia,omitempty"`
+	Ancestor        *traceReference `json:"ia,omitempty"`
 }
 
-type TraceReference struct {
+type traceReference struct {
 	TraceID  string `json:"t"`
 	ParentID string `json:"p,omitempty"`
 }
