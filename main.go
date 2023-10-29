@@ -143,6 +143,7 @@ func agentList(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	ma.Lala()
 	http.HandleFunc("/spawn/", spawnAgent)
 	http.HandleFunc("/kill/", killAgent)
 	http.HandleFunc("/list", agentList)
