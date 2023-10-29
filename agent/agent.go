@@ -181,22 +181,6 @@ func (a *Agent) Stop() error {
 	return nil
 }
 
-// func newTraceProvider(res *resource.Resource) (*trace.TracerProvider, error) {
-// 	traceExporter, err := stdouttrace.New(
-// 		stdouttrace.WithPrettyPrint())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	traceProvider := trace.NewTracerProvider(
-// 		trace.WithBatcher(traceExporter,
-// 			// Default is 5s. Set to 1s for demonstrative purposes.
-// 			trace.WithBatchTimeout(time.Second)),
-// 		trace.WithResource(res),
-// 	)
-// 	return traceProvider, nil
-// }
-
 func initProvider() (func(context.Context) error, error) {
 	ctx := context.Background()
 
@@ -280,6 +264,16 @@ func Lala() {
 		ctx,
 		"CollectorExporter-Example",
 		trace.WithAttributes(commonAttrs...))
-	defer span.End()
-	log.Println("veio aki")
+
+	ctx, childSp := tracer.Start(
+		ctx,
+		"CHILD-CollectorExporter-Example",
+		trace.WithAttributes(commonAttrs...))
+
+	time.Sleep(time.Second)
+
+	span.End()
+
+	time.Sleep(time.Millisecond * 450)
+	childSp.End()
 }
