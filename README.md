@@ -37,4 +37,5 @@ We assume the first auto generated port `29091`, but you can specify a port by c
 
 Will start the agent manager with the given port.
 
-[See more](docs/more.md)
+> [!NOTE]
+> This is a pet project and should be treated as one.
