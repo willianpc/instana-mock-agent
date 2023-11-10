@@ -5,20 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
 	"regexp"
 	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
-	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -233,47 +229,22 @@ func initProvider() (func(context.Context) error, error) {
 	return tracerProvider.Shutdown, nil
 }
 
-func Lala() {
+func EnableJeager() {
 	log.Printf("Waiting for connection...")
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
+	// ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	// defer cancel()
 
-	shutdown, err := initProvider()
+	_, err := initProvider()
+	// shutdown, err := initProvider()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() {
-		if err := shutdown(ctx); err != nil {
-			log.Fatal("failed to shutdown TracerProvider: %w", err)
-		}
-	}()
+	// defer func() {
+	// 	fmt.Println("finalizou tudo")
+	// 	if err := shutdown(ctx); err != nil {
+	// 		log.Fatal("failed to shutdown TracerProvider: %w", err)
+	// 	}
+	// }()
 
-	tracer := otel.Tracer("test-tracer")
-
-	// Attributes represent additional key-value descriptors that can be bound
-	// to a metric observer or recorder.
-	commonAttrs := []attribute.KeyValue{
-		attribute.String("attrA", "chocolate"),
-		attribute.String("attrB", "raspberry"),
-		attribute.String("attrC", "vanilla"),
-	}
-
-	// work begins
-	ctx, span := tracer.Start(
-		ctx,
-		"CollectorExporter-Example",
-		trace.WithAttributes(commonAttrs...))
-
-	ctx, childSp := tracer.Start(
-		ctx,
-		"CHILD-CollectorExporter-Example",
-		trace.WithAttributes(commonAttrs...))
-
-	time.Sleep(time.Second)
-
-	span.End()
-
-	time.Sleep(time.Millisecond * 450)
-	childSp.End()
 }

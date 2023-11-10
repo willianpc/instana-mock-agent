@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +11,10 @@ import (
 	"sync"
 
 	ma "github.com/willianpc/instana-mock-agent/agent"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -30,6 +36,7 @@ func init() {
 }
 
 func spawnAgent(w http.ResponseWriter, r *http.Request) {
+	traceSomething()
 	mainMu.Lock()
 	defer mainMu.Unlock()
 
@@ -142,8 +149,46 @@ func agentList(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(l))
 }
 
+func traceSomething() {
+	tracer := otel.Tracer("test-tracer")
+	// Attributes represent additional key-value descriptors that can be bound
+	// to a metric observer or recorder.
+	commonAttrs := []attribute.KeyValue{
+		attribute.String("attrA", "chocolate"),
+		attribute.String("attrB", "raspberry"),
+		attribute.String("attrC", "vanilla"),
+	}
+
+	var opts trace.SpanStartOption = trace.WithAttributes(commonAttrs...)
+
+	ctx := context.Background()
+
+	// work begins
+	ctx, span := tracer.Start(
+		ctx,
+		"parent-span",
+		opts)
+
+	span.AddEvent("span-created")
+
+	_, childSp := tracer.Start(
+		ctx,
+		"chid-span",
+		trace.WithAttributes(commonAttrs...))
+
+	childSp.RecordError(errors.New("oh nooo!!!!!!"))
+	childSp.SetStatus(codes.Error, "oh no")
+
+	span.End()
+
+	childSp.End()
+}
+
 func main() {
-	ma.Lala()
+	if _, ok := os.LookupEnv("ENABLE_JAEGER"); ok {
+		ma.EnableJeager()
+	}
+
 	http.HandleFunc("/spawn/", spawnAgent)
 	http.HandleFunc("/kill/", killAgent)
 	http.HandleFunc("/list", agentList)
